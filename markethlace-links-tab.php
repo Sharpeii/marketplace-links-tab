@@ -64,23 +64,30 @@ function save_external_links_metabox($post_id): void
     }
 }
 
-// Отключаем кнопку «Добавить в корзину» для всех типов товаров
-add_filter('woocommerce_is_purchasable', 'disable_add_to_cart_for_all_products', 10, 2);
-function disable_add_to_cart_for_all_products($is_purchasable, $product): bool
+// Убираем кнопку «Добавить в корзину» на странице товара для всех типов товаров
+add_action('wp', 'remove_add_to_cart_buttons');
+function remove_add_to_cart_buttons(): void
 {
-    return false; // Отключаем покупку для всех товаров
+    if (is_product()) {
+        remove_action('woocommerce_single_product_summary', 'woocommerce_template_single_add_to_cart', 30);
+    }
 }
-
-// Добавляем кастомные кнопки вместо кнопки «Добавить в корзину» на странице товара
-add_action('woocommerce_single_product_summary', 'add_custom_marketplace_buttons', 30);
-function add_custom_marketplace_buttons(): void
+// Функция для вывода кнопок маркетплейсов
+function display_custom_marketplace_buttons(): void
 {
     global $product;
+
+    // Проверяем и инициализируем объект $product, если он отсутствует
+    if (!$product || !is_a($product, 'WC_Product')) {
+        $product_id = get_the_ID();
+        $product = wc_get_product($product_id);
+    }
 
     // Получаем ссылки из метаполей
     $marketplace_link_1 = get_post_meta($product->get_id(), 'external_marketplace_link_1', true);
     $marketplace_link_2 = get_post_meta($product->get_id(), 'external_marketplace_link_2', true);
-    // Проверяем, что ссылки установлены, и выводим кастомные кнопки
+
+    // Проверяем наличие ссылок и выводим кнопки
     if ($marketplace_link_1 || $marketplace_link_2) {
         echo '<div class="custom-marketplace-buttons" style="margin-top: 20px;">';
 
@@ -95,3 +102,6 @@ function add_custom_marketplace_buttons(): void
         echo '</div>';
     }
 }
+
+// Выводим кнопки для маркетплейсов
+//display_custom_marketplace_buttons();
